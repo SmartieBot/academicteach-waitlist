@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Academic Tēach · Early look</title>
+<meta name="description" content="Something wiser this way comes. Join the Academic Tēach waitlist for an early look.">
+<meta property="og:title" content="Academic Tēach · Early look">
+<meta property="og:description" content="Something wiser this way comes.">
+<meta property="og:image" content="logo.png">
+<meta name="theme-color" content="#04060c">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@1,500&display=swap" rel="stylesheet">
+<style>
+  /* Brand tokens (same as the video: src/theme.ts) */
+  :root {
+    --night: #04060c;
+    --night-haze: #0a1426;
+    --green: #2dffa0;
+    --blue: #3b8cff;
+    --blue-light: #8cc4ff;
+    --blue-deep: #123c8c;
+    --text: #eaf6ff;
+    --text-dim: #9fb4cc;
+    --card: rgba(10, 18, 36, 0.72);
+    --line: rgba(140, 196, 255, 0.2);
+    --error: #ff8a8a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: var(--night);
+    color: var(--text);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    padding: max(28px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+    position: relative;
+    overflow-x: hidden;
+  }
+  /* painted-water wash behind everything */
+  .wash {
+    position: fixed; inset: -20%;
+    background:
+      radial-gradient(40% 30% at 20% 22%, rgba(18, 60, 140, 0.55), transparent 70%),
+      radial-gradient(35% 28% at 85% 40%, rgba(59, 140, 255, 0.22), transparent 70%),
+      radial-gradient(45% 25% at 40% 85%, rgba(11, 34, 82, 0.7), transparent 70%),
+      radial-gradient(25% 20% at 75% 80%, rgba(45, 255, 160, 0.08), transparent 70%),
+      linear-gradient(180deg, #010207 0%, var(--night) 45%, var(--night-haze) 100%);
+    filter: blur(8px);
+    z-index: -2;
+  }
+  .grain {
+    position: fixed; inset: 0; z-index: -1; opacity: 0.08; pointer-events: none; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+  }
+  main { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+
+  .tag {
+    font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-dim);
+    border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; margin-bottom: 26px;
+  }
+  .tag b { color: var(--green); font-weight: 600; }
+  .icon {
+    width: 104px; height: 104px; border-radius: 24px; overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: 0 0 40px rgba(45, 255, 160, 0.14), 0 0 90px rgba(59, 140, 255, 0.22);
+  }
+  .icon img { width: 100%; height: 100%; display: block; }
+  .brand { margin: 14px 0 0; font-weight: 700; font-size: 20px; letter-spacing: -0.2px; }
+  .brand span {
+    background: linear-gradient(90deg, var(--blue), var(--green));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  h1 { font-size: clamp(30px, 8.4vw, 40px); line-height: 1.12; letter-spacing: -0.8px; margin: 28px 0 0; font-weight: 700; }
+  .quote {
+    margin: 18px 0 0; font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-weight: 500;
+    font-size: 20px; line-height: 1.4; color: var(--blue-light);
+  }
+  .pitch { margin: 18px 0 0; color: var(--text-dim); font-size: 15.5px; line-height: 1.55; }
+
+  form, .done {
+    width: 100%; margin-top: 30px; padding: 22px; border-radius: 20px;
+    background: var(--card); border: 1px solid var(--line);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    text-align: left;
+  }
+  label.field { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 8px; }
+  input[type=email] {
+    width: 100%; font: inherit; font-size: 16px; color: var(--text);
+    background: rgba(4, 6, 12, 0.6); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; outline: none;
+  }
+  input[type=email]:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(45, 255, 160, 0.18); }
+  fieldset { border: 0; margin: 18px 0 0; padding: 0; }
+  legend { font-size: 13px; color: var(--text-dim); margin-bottom: 8px; padding: 0; }
+  .roles { display: flex; gap: 8px; }
+  .roles label { flex: 1; }
+  .roles input { position: absolute; opacity: 0; pointer-events: none; }
+  .roles span {
+    display: block; text-align: center; padding: 11px 6px; border-radius: 12px; font-size: 14.5px; font-weight: 500;
+    border: 1px solid var(--line); color: var(--text-dim); cursor: pointer; user-select: none;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .roles input:checked + span { border-color: var(--green); color: var(--text); background: rgba(45, 255, 160, 0.1); }
+  .roles input:focus-visible + span { box-shadow: 0 0 0 3px rgba(45, 255, 160, 0.3); }
+  .consent { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; font-size: 13.5px; line-height: 1.45; color: var(--text-dim); cursor: pointer; }
+  .consent input { margin-top: 2px; width: 18px; height: 18px; accent-color: var(--green); flex: none; }
+  button {
+    width: 100%; margin-top: 20px; font: inherit; font-weight: 600; font-size: 16px; color: #031a10;
+    background: linear-gradient(90deg, var(--green), #6fe7ff); border: 0; border-radius: 12px; padding: 15px; cursor: pointer;
+    box-shadow: 0 0 30px rgba(45, 255, 160, 0.25);
+  }
+  button:disabled { opacity: 0.6; cursor: wait; }
+  .msg { min-height: 20px; margin: 12px 0 0; font-size: 13.5px; color: var(--error); }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+  .done { display: none; text-align: center; padding: 30px 22px; }
+  .done.show { display: block; animation: rise 0.5s ease-out; }
+  .done .num { font-size: 54px; font-weight: 700; letter-spacing: -1.5px; color: var(--green); text-shadow: 0 0 30px rgba(45, 255, 160, 0.4); }
+  .done p { margin: 8px 0 0; color: var(--text-dim); font-size: 15px; line-height: 1.5; }
+  .done strong { color: var(--text); font-size: 18px; }
+  .ripple { position: fixed; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; border: 2px solid var(--green); opacity: 0; pointer-events: none; }
+  .ripple.go { animation: ripple 0.9s ease-out; }
+  @keyframes ripple { from { transform: scale(1); opacity: 0.7; } to { transform: scale(70); opacity: 0; } }
+  @keyframes rise { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .privacy { margin: 18px 4px 0; font-size: 12px; line-height: 1.55; color: var(--text-dim); opacity: 0.85; }
+  footer { margin-top: 26px; font-size: 12px; color: var(--text-dim); opacity: 0.6; }
+  @media (prefers-reduced-motion: reduce) { .done.show, .ripple.go { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wash" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="ripple" id="ripple" aria-hidden="true"></div>
+
+<main>
+  <div class="tag"><b>Leaked</b> · early look</div>
+  <div class="icon"><img src="logo.png" alt="Academic Tēach logo" width="104" height="104"></div>
+  <p class="brand">Academic <span>Tēach</span></p>
+
+  <h1>Something wiser this way comes.</h1>
+  <p class="quote">“The fault, dear Brutus, is not in our stars, nor in ourselves, but in the way we’ve always been taught.”</p>
+  <p class="pitch">Create your own AI teacher, one that teaches the way you learn. Join the waitlist for an early look.</p>
+
+  <form id="form" novalidate>
+    <label class="field" for="email">Your email</label>
+    <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
+
+    <fieldset>
+      <legend>I’m a…</legend>
+      <div class="roles">
+        <label><input type="radio" name="role" value="student" checked><span>Student</span></label>
+        <label><input type="radio" name="role" value="teacher"><span>Teacher</span></label>
+        <label><input type="radio" name="role" value="parent"><span>Parent</span></label>
+      </div>
+    </fieldset>
+
+    <label class="consent">
+      <input id="consent" type="checkbox" required>
+      <span>I’m 18 or older, or my parent/guardian agrees to me joining.</span>
+    </label>
+
+    <!-- bots fill this, people never see it -->
+    <div class="hp" aria-hidden="true"><label>Leave empty <input id="website" tabindex="-1" autocomplete="off"></label></div>
+
+    <button id="submit" type="submit">Join the waitlist</button>
+    <p class="msg" id="msg" role="alert"></p>
+  </form>
+
+  <div class="done" id="done" role="status" aria-live="polite">
+    <div class="num" id="num">#1</div>
+    <p><strong>You’re in line.</strong></p>
+    <p>We’ll email you when your early look is ready.</p>
+  </div>
+
+  <p class="privacy">We only keep your email and role, only to invite you to Academic Tēach. We don’t share them with anyone. To have your email removed at any time, DM us on Instagram.</p>
+  <footer>© Academic Tēach</footer>
+</main>
+
+<script>
+  // Sign-ups go to the separate `academic-teach-waitlist` Supabase project.
+  // The publishable key is meant to be public: it can only call join_waitlist(), which can only add one validated sign-up.
+  const SUPABASE_URL = 'https://tpbsettbtxflihsjvcvi.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_BxhlXRgRjeda7rjAKvq7ww_RYvgHtFu';
+  // Which Story brought them here: ?src=leak-1 (default)
+  const SOURCE = (new URLSearchParams(location.search).get('src') || 'leak-1').slice(0, 40);
+
+  const $ = (id) => document.getElementById(id);
+  const form = $('form'), msg = $('msg'), btn = $('submit');
+
+  // The app's own 'success' chime: [freq, start, dur], sine, gain 0.07, 12 ms attack, exponential decay
+  function playSuccess() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const notes = [[523.25, 0, 0.24], [659.25, 0.08, 0.26], [783.99, 0.16, 0.42]];
+      const t0 = ctx.currentTime + 0.02;
+      for (const [freq, start, dur] of notes) {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, t0 + start);
+        g.gain.linearRampToValueAtTime(0.07, t0 + start + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + start + dur);
+        osc.connect(g).connect(ctx.destination);
+        osc.start(t0 + start);
+        osc.stop(t0 + start + dur + 0.02);
+      }
+      setTimeout(() => ctx.close(), 1200);
+    } catch (e) { /* sound is a bonus */ }
+  }
+
+  const ERRORS = {
+    invalid_email: 'That email doesn’t look right. Mind checking it?',
+    invalid_role: 'Please pick student, teacher or parent.',
+    consent_required: 'Please tick the box to confirm.',
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.textContent = '';
+    const email = $('email').value.trim();
+    const role = form.querySelector('input[name=role]:checked')?.value;
+    const consent = $('consent').checked;
+
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) { msg.textContent = ERRORS.invalid_email; $('email').focus(); return; }
+    if (!consent) { msg.textContent = ERRORS.consent_required; return; }
+    if ($('website').value) return; // bot
+
+    btn.disabled = true;
+    btn.textContent = 'Joining…';
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/join_waitlist`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', apikey: SUPABASE_KEY},
+        body: JSON.stringify({p_email: email, p_role: role, p_consent: consent, p_source: SOURCE}),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const code = data && data.message;
+        throw new Error(ERRORS[code] || 'Something went wrong. Please try again in a moment.');
+      }
+      $('num').textContent = '#' + Number(data);
+      form.style.display = 'none';
+      $('done').classList.add('show');
+      playSuccess();
+      // the app's 'success' haptic pattern (Android; iPhones ignore it)
+      if (navigator.vibrate) navigator.vibrate([14, 60, 22]);
+      const r = $('ripple');
+      r.classList.remove('go'); void r.offsetWidth; r.classList.add('go');
+    } catch (err) {
+      msg.textContent = err.message || 'Something went wrong. Please try again in a moment.';
+      btn.disabled = false;
+      btn.textContent = 'Join the waitlist';
+    }
+  });
+</script>
+</body>
+</html>
