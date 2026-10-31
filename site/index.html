@@ -147,6 +147,19 @@
   }
   button.link span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .copy-hint { flex: none; color: var(--green); font-family: Inter, system-ui, sans-serif; font-weight: 600; }
+  button.gen {
+    width: 100%; margin-top: 12px; padding: 12px; border-radius: 12px; box-shadow: none;
+    font: 600 15px Inter, system-ui, sans-serif; color: var(--text); cursor: pointer;
+    background: rgba(59, 140, 255, 0.12); border: 1px solid rgba(140, 196, 255, 0.45);
+  }
+  .msgbox { margin-top: 12px; text-align: left; }
+  .msgbox textarea {
+    width: 100%; resize: vertical; min-height: 120px; padding: 12px 14px; border-radius: 12px;
+    font: 15px/1.5 Inter, system-ui, sans-serif; color: var(--text);
+    background: rgba(4, 6, 12, 0.6); border: 1px solid var(--line); outline: none;
+  }
+  .msgbox textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(45, 255, 160, 0.18); }
+  .msgbox .share-btns { margin-top: 10px; }
 
   .privacy { margin: 18px 4px 0; font-size: 12px; line-height: 1.55; color: var(--text-dim); opacity: 0.85; }
   footer { margin-top: 26px; font-size: 12px; color: var(--text-dim); opacity: 0.6; }
@@ -202,12 +215,22 @@
 
     <div class="share">
       <p class="share-title">Move up the line</p>
-      <p class="share-sub">Every friend who joins with your link moves you up <b>5 spots</b> (counts up to 10 friends).</p>
+      <p class="share-sub">Every friend who joins with your link moves you up <b>5 spots</b> (counts up to 5 friends).</p>
       <div class="share-btns">
         <button type="button" id="share">Share my link</button>
         <a class="wa" id="wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
       </div>
       <button type="button" class="link" id="copy" aria-label="Copy your link"><span id="mylink"></span><span class="copy-hint" id="copyHint">Copy</span></button>
+
+      <!-- a ready-made message with their link inside, so they don't have to type one every time -->
+      <button type="button" class="gen" id="gen">✨ Generate text</button>
+      <div class="msgbox" id="msgbox" hidden>
+        <textarea id="msgtext" rows="5" aria-label="Your share message (you can edit it)"></textarea>
+        <div class="share-btns">
+          <button type="button" id="copyMsg">Copy message</button>
+          <a class="wa" id="waMsg" href="#" target="_blank" rel="noopener">Send on WhatsApp</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -273,6 +296,17 @@
     consent_required: 'Please tick the box to confirm.',
   };
 
+  // Ready-made share messages ({link} = their personal link). Honest claims only.
+  const MESSAGES = [
+    'Found something cool: Academic Tēach lets you create your own AI teacher that explains things the way you learn. I’m on the waitlist. Join with my link (it moves me up the line 🙏): {link}',
+    'Studying would be so much easier with a teacher who gets how you learn. Academic Tēach lets you build your own AI one. The early-access waitlist is open: {link}',
+    'Imagine a teacher who never gets tired of your doubts. Academic Tēach is building that, and you get to design yours. I joined the waitlist, you should too: {link}',
+    'Academic Tēach: create your own AI teacher. It isn’t public yet, but there’s a waitlist. Join with my link and help me move up: {link}',
+    'Something wiser this way comes 👀 Academic Tēach lets you make your own AI teacher. Get on the waitlist with my link: {link}',
+    'Exams, doubts, late nights… Academic Tēach lets you build an AI teacher that explains things the way you understand. The waitlist is open: {link}',
+  ];
+  let msgIndex = Math.floor(Math.random() * MESSAGES.length); // different people start on different messages
+
   // Show your spot, friends count and personal share link
   function showSpot(spot, {welcomeBack = false} = {}) {
     const link = `${location.origin}${location.pathname}?ref=${spot.code}&src=ref`;
@@ -285,19 +319,37 @@
     $('mylink').textContent = link.replace(/^https?:\/\//, '');
     $('wa').href = 'https://wa.me/?text=' + encodeURIComponent(`${text} ${link}`);
     $('share').onclick = async () => {
+      // once they've generated a message, share that (it already contains the link)
+      const message = $('msgbox').hidden ? null : $('msgtext').value.trim();
       if (navigator.share) {
-        try { await navigator.share({title: 'Academic Tēach', text, url: link}); return; } catch (e) { if (e.name === 'AbortError') return; }
+        try {
+          await navigator.share(message ? {title: 'Academic Tēach', text: message} : {title: 'Academic Tēach', text, url: link});
+          return;
+        } catch (e) { if (e.name === 'AbortError') return; }
       }
-      copy(link);
+      copy(message || link, $('copyHint'), 'Copy');
     };
-    $('copy').onclick = () => copy(link);
+    $('copy').onclick = () => copy(link, $('copyHint'), 'Copy');
+
+    // ✨ Generate text: fill the box with the next message, link included
+    const waMsg = () => { $('waMsg').href = 'https://wa.me/?text=' + encodeURIComponent($('msgtext').value.trim()); };
+    $('gen').onclick = () => {
+      $('msgtext').value = MESSAGES[msgIndex % MESSAGES.length].replace('{link}', link);
+      msgIndex += 1;
+      $('msgbox').hidden = false;
+      $('gen').textContent = '✨ Generate another';
+      waMsg();
+    };
+    $('msgtext').oninput = waMsg; // keep WhatsApp in step with their edits
+    $('copyMsg').onclick = () => copy($('msgtext').value.trim(), $('copyMsg'), 'Copy message');
+
     form.style.display = 'none';
     $('done').classList.add('show');
   }
-  async function copy(link) {
-    try { await navigator.clipboard.writeText(link); $('copyHint').textContent = 'Copied ✓'; }
-    catch (e) { $('copyHint').textContent = 'Press and hold to copy'; }
-    setTimeout(() => { $('copyHint').textContent = 'Copy'; }, 2200);
+  async function copy(value, el, label) {
+    try { await navigator.clipboard.writeText(value); el.textContent = 'Copied ✓'; }
+    catch (e) { el.textContent = 'Press and hold to copy'; }
+    setTimeout(() => { el.textContent = label; }, 2200);
   }
 
   // Coming back on the same phone: show the live spot straight away
