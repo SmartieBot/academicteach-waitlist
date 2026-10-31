@@ -129,6 +129,25 @@
   @keyframes ripple { from { transform: scale(1); opacity: 0.7; } to { transform: scale(70); opacity: 0; } }
   @keyframes rise { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 
+  .done .back { margin: 0 0 4px; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); }
+  .done .friends { margin-top: 10px; color: var(--green); font-weight: 600; }
+  .invited { margin: 0 0 16px; font-size: 13px; color: var(--green); text-align: center; }
+  .share { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; }
+  .share-title { margin: 0; color: var(--text); font-weight: 700; font-size: 17px; }
+  .share-sub { margin: 6px 0 0; font-size: 14px; color: var(--text-dim); }
+  .share-sub b { color: var(--text); }
+  .share-btns { display: flex; gap: 10px; margin-top: 16px; }
+  .share-btns button, .share-btns .wa { flex: 1; margin: 0; font: inherit; font-weight: 600; font-size: 15px; padding: 13px 10px; border-radius: 12px; text-decoration: none; text-align: center; cursor: pointer; }
+  .share-btns button { color: #031a10; background: linear-gradient(90deg, var(--green), #6fe7ff); border: 0; box-shadow: none; width: auto; }
+  .share-btns .wa { color: var(--text); background: rgba(37, 211, 102, 0.14); border: 1px solid rgba(37, 211, 102, 0.55); }
+  button.link {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; margin-top: 12px; padding: 11px 14px;
+    background: rgba(4, 6, 12, 0.6); border: 1px dashed var(--line); border-radius: 12px; box-shadow: none;
+    font: 500 13px ui-monospace, Menlo, monospace; color: var(--text-dim); cursor: pointer; text-align: left;
+  }
+  button.link span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .copy-hint { flex: none; color: var(--green); font-family: Inter, system-ui, sans-serif; font-weight: 600; }
+
   .privacy { margin: 18px 4px 0; font-size: 12px; line-height: 1.55; color: var(--text-dim); opacity: 0.85; }
   footer { margin-top: 26px; font-size: 12px; color: var(--text-dim); opacity: 0.6; }
   @media (prefers-reduced-motion: reduce) { .done.show, .ripple.go { animation: none; } }
@@ -149,6 +168,7 @@
   <p class="pitch">Create your own AI teacher, one that teaches the way you learn. Join the waitlist for an early look.</p>
 
   <form id="form" novalidate>
+    <p class="invited" id="invited" hidden>A friend invited you. Joining helps them move up too.</p>
     <label class="field" for="email">Your email</label>
     <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
 
@@ -174,12 +194,24 @@
   </form>
 
   <div class="done" id="done" role="status" aria-live="polite">
+    <p class="back" id="back" hidden>Welcome back.</p>
     <div class="num" id="num">#1</div>
     <p><strong>You’re in line.</strong></p>
     <p>We’ll email you when your early look is ready.</p>
+    <p class="friends" id="friends" hidden></p>
+
+    <div class="share">
+      <p class="share-title">Move up the line</p>
+      <p class="share-sub">Every friend who joins with your link moves you up <b>5 spots</b> (counts up to 10 friends).</p>
+      <div class="share-btns">
+        <button type="button" id="share">Share my link</button>
+        <a class="wa" id="wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+      <button type="button" class="link" id="copy" aria-label="Copy your link"><span id="mylink"></span><span class="copy-hint" id="copyHint">Copy</span></button>
+    </div>
   </div>
 
-  <p class="privacy">We only keep your email and role, only to invite you to Academic Tēach. We don’t share them with anyone. To have your email removed at any time, DM us on Instagram.</p>
+  <p class="privacy">We only keep your email and role, only to invite you to Academic Tēach. We don’t share them with anyone. If you join with a friend’s link, they only see that one more friend joined, never your email. To have your email removed at any time, DM us on Instagram.</p>
   <footer>© Academic Tēach</footer>
 </main>
 
@@ -188,11 +220,28 @@
   // The publishable key is meant to be public: it can only call join_waitlist(), which can only add one validated sign-up.
   const SUPABASE_URL = 'https://tpbsettbtxflihsjvcvi.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_BxhlXRgRjeda7rjAKvq7ww_RYvgHtFu';
-  // Which Story brought them here: ?src=leak-1 (default)
-  const SOURCE = (new URLSearchParams(location.search).get('src') || 'leak-1').slice(0, 40);
+  // Which Story brought them here (?src=leak-1, the default), and whose link they used (?ref=CODE)
+  const params = new URLSearchParams(location.search);
+  const SOURCE = (params.get('src') || 'leak-1').slice(0, 40);
+  const REF = (params.get('ref') || '').trim().slice(0, 16);
+  const STORE = 'at_waitlist_code';
 
   const $ = (id) => document.getElementById(id);
   const form = $('form'), msg = $('msg'), btn = $('submit');
+  if (REF) $('invited').hidden = false;
+
+  const rpc = async (fn, body) => {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', apikey: SUPABASE_KEY},
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data && ERRORS[data.message]) || 'Something went wrong. Please try again in a moment.');
+    return data;
+  };
+  const remember = (code) => { try { localStorage.setItem(STORE, code); } catch (e) { /* private mode: fine */ } };
+  const recall = () => { try { return localStorage.getItem(STORE); } catch (e) { return null; } };
 
   // The app's own 'success' chime: [freq, start, dur], sine, gain 0.07, 12 ms attack, exponential decay
   function playSuccess() {
@@ -224,6 +273,39 @@
     consent_required: 'Please tick the box to confirm.',
   };
 
+  // Show your spot, friends count and personal share link
+  function showSpot(spot, {welcomeBack = false} = {}) {
+    const link = `${location.origin}${location.pathname}?ref=${spot.code}&src=ref`;
+    const text = 'I’m in line for Academic Tēach: build your own AI teacher. Join with my link:';
+    $('num').textContent = '#' + Number(spot.position);
+    $('back').hidden = !welcomeBack;
+    const n = Number(spot.referrals) || 0;
+    $('friends').hidden = n === 0;
+    $('friends').textContent = n === 1 ? '1 friend joined with your link.' : `${n} friends joined with your link.`;
+    $('mylink').textContent = link.replace(/^https?:\/\//, '');
+    $('wa').href = 'https://wa.me/?text=' + encodeURIComponent(`${text} ${link}`);
+    $('share').onclick = async () => {
+      if (navigator.share) {
+        try { await navigator.share({title: 'Academic Tēach', text, url: link}); return; } catch (e) { if (e.name === 'AbortError') return; }
+      }
+      copy(link);
+    };
+    $('copy').onclick = () => copy(link);
+    form.style.display = 'none';
+    $('done').classList.add('show');
+  }
+  async function copy(link) {
+    try { await navigator.clipboard.writeText(link); $('copyHint').textContent = 'Copied ✓'; }
+    catch (e) { $('copyHint').textContent = 'Press and hold to copy'; }
+    setTimeout(() => { $('copyHint').textContent = 'Copy'; }, 2200);
+  }
+
+  // Coming back on the same phone: show the live spot straight away
+  const saved = recall();
+  if (saved) {
+    rpc('waitlist_spot', {p_code: saved}).then((spot) => { if (spot) showSpot(spot, {welcomeBack: true}); }).catch(() => {});
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     msg.textContent = '';
@@ -238,19 +320,9 @@
     btn.disabled = true;
     btn.textContent = 'Joining…';
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/join_waitlist`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', apikey: SUPABASE_KEY},
-        body: JSON.stringify({p_email: email, p_role: role, p_consent: consent, p_source: SOURCE}),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        const code = data && data.message;
-        throw new Error(ERRORS[code] || 'Something went wrong. Please try again in a moment.');
-      }
-      $('num').textContent = '#' + Number(data);
-      form.style.display = 'none';
-      $('done').classList.add('show');
+      const spot = await rpc('join_waitlist_v2', {p_email: email, p_role: role, p_consent: consent, p_source: SOURCE, p_ref: REF || null});
+      remember(spot.code);
+      showSpot(spot);
       playSuccess();
       // the app's 'success' haptic pattern (Android; iPhones ignore it)
       if (navigator.vibrate) navigator.vibrate([14, 60, 22]);
