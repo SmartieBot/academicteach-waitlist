@@ -140,27 +140,37 @@
   .share-btns button, .share-btns .wa { flex: 1; margin: 0; font: inherit; font-weight: 600; font-size: 15px; padding: 13px 10px; border-radius: 12px; text-decoration: none; text-align: center; cursor: pointer; }
   .share-btns button { color: #031a10; background: linear-gradient(90deg, var(--green), #6fe7ff); border: 0; box-shadow: none; width: auto; }
   .share-btns .wa { color: var(--text); background: rgba(37, 211, 102, 0.14); border: 1px solid rgba(37, 211, 102, 0.55); }
+  /* small icon chips that change what the link box holds */
+  .tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-top: 16px; }
+  .tool {
+    flex: 0 1 auto; display: flex; align-items: center; justify-content: center; gap: 4px;
+    width: auto; margin: 0; padding: 7px 8px; border-radius: 999px; box-shadow: none; white-space: nowrap;
+    font: 600 11.5px Inter, system-ui, sans-serif; color: var(--text);
+    background: rgba(10, 18, 36, 0.75); border: 1px solid var(--line); cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s, opacity 0.15s;
+  }
+  .tool svg { width: 14px; height: 14px; flex: none; }
+  #gen svg { color: var(--green); }
+  #prev svg { color: var(--blue-light); }
+  #remove svg { color: var(--text-dim); }
+  .tool:not(:disabled):hover { border-color: rgba(45, 255, 160, 0.55); }
+  .tool:not(:disabled):active { transform: scale(0.96); }
+  .tool:disabled { opacity: 0.35; cursor: default; }
+
+  /* the copyable box: just the link, or a message with the link at the end */
   button.link {
-    display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; margin-top: 12px; padding: 11px 14px;
+    display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 11px 14px;
     background: rgba(4, 6, 12, 0.6); border: 1px dashed var(--line); border-radius: 12px; box-shadow: none;
     font: 500 13px ui-monospace, Menlo, monospace; color: var(--text-dim); cursor: pointer; text-align: left;
   }
-  button.link span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  button.link .link-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  button.link.msg { flex-direction: column; align-items: stretch; gap: 8px; border-style: solid; border-color: rgba(45, 255, 160, 0.35); }
+  button.link.msg .link-text { white-space: normal; font: 14.5px/1.5 Inter, system-ui, sans-serif; color: var(--text); }
+  button.link .url { color: var(--green); word-break: break-all; }
+  button.link.msg .copy-hint { align-self: flex-end; }
   .copy-hint { flex: none; color: var(--green); font-family: Inter, system-ui, sans-serif; font-weight: 600; }
-  button.gen {
-    width: 100%; margin-top: 12px; padding: 12px; border-radius: 12px; box-shadow: none;
-    font: 600 15px Inter, system-ui, sans-serif; color: var(--text); cursor: pointer;
-    background: rgba(59, 140, 255, 0.12); border: 1px solid rgba(140, 196, 255, 0.45);
-  }
-  .msgbox { margin-top: 12px; text-align: left; }
-  .msgbox textarea {
-    width: 100%; resize: vertical; min-height: 120px; padding: 12px 14px; border-radius: 12px;
-    font: 15px/1.5 Inter, system-ui, sans-serif; color: var(--text);
-    background: rgba(4, 6, 12, 0.6); border: 1px solid var(--line); outline: none;
-  }
-  .msgbox textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(45, 255, 160, 0.18); }
-  .msgbox .share-btns { margin-top: 10px; }
 
+  @media (max-width: 380px) { .done { padding-left: 16px; padding-right: 16px; } }
   .privacy { margin: 18px 4px 0; font-size: 12px; line-height: 1.55; color: var(--text-dim); opacity: 0.85; }
   footer { margin-top: 26px; font-size: 12px; color: var(--text-dim); opacity: 0.6; }
   @media (prefers-reduced-motion: reduce) { .done.show, .ripple.go { animation: none; } }
@@ -220,17 +230,22 @@
         <button type="button" id="share">Share my link</button>
         <a class="wa" id="wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
       </div>
-      <button type="button" class="link" id="copy" aria-label="Copy your link"><span id="mylink"></span><span class="copy-hint" id="copyHint">Copy</span></button>
-
-      <!-- a ready-made message with their link inside, so they don't have to type one every time -->
-      <button type="button" class="gen" id="gen">✨ Generate text</button>
-      <div class="msgbox" id="msgbox" hidden>
-        <textarea id="msgtext" rows="5" aria-label="Your share message (you can edit it)"></textarea>
-        <div class="share-btns">
-          <button type="button" id="copyMsg">Copy message</button>
-          <a class="wa" id="waMsg" href="#" target="_blank" rel="noopener">Send on WhatsApp</a>
-        </div>
+      <!-- small tools: put a ready-made message (with the link) into the box below, go back, or clear it -->
+      <div class="tools" role="group" aria-label="Add a message to your link">
+        <button type="button" class="tool" id="gen">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 2.5l1.9 5 5 1.9-5 1.9-1.9 5-1.9-5-5-1.9 5-1.9z M18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
+          <span>Generate text</span>
+        </button>
+        <button type="button" class="tool" id="prev" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+          <span>Previous</span>
+        </button>
+        <button type="button" class="tool" id="remove" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+          <span>Remove</span>
+        </button>
       </div>
+      <button type="button" class="link" id="copy" aria-label="Copy"><span class="link-text" id="mylink"></span><span class="copy-hint" id="copyHint">Copy</span></button>
     </div>
   </div>
 
@@ -316,32 +331,49 @@
     const n = Number(spot.referrals) || 0;
     $('friends').hidden = n === 0;
     $('friends').textContent = n === 1 ? '1 friend joined with your link.' : `${n} friends joined with your link.`;
-    $('mylink').textContent = link.replace(/^https?:\/\//, '');
-    $('wa').href = 'https://wa.me/?text=' + encodeURIComponent(`${text} ${link}`);
+    // The copyable box holds either just the link, or a ready-made message ending in the link.
+    // history = the messages shown so far; pos = which one is in the box (-1 = just the link).
+    let history = [];
+    let pos = -1;
+    const content = () => (pos < 0 ? link : MESSAGES[history[pos]].replace('{link}', link));
+    const render = () => {
+      const box = $('copy'), t = $('mylink');
+      t.textContent = '';
+      if (pos < 0) {
+        box.classList.remove('msg');
+        t.textContent = link.replace(/^https?:\/\//, '');
+      } else {
+        box.classList.add('msg');
+        t.append(MESSAGES[history[pos]].split('{link}')[0]);
+        const url = document.createElement('span');
+        url.className = 'url';
+        url.textContent = link;
+        t.append(url);
+      }
+      $('prev').disabled = pos < 1;
+      $('remove').disabled = pos < 0;
+      $('wa').href = 'https://wa.me/?text=' + encodeURIComponent(pos < 0 ? `${text} ${link}` : content());
+    };
+    $('gen').onclick = () => {
+      history = history.slice(0, pos + 1);
+      history.push(msgIndex % MESSAGES.length);
+      msgIndex += 1;
+      pos = history.length - 1;
+      render();
+    };
+    $('prev').onclick = () => { if (pos > 0) { pos -= 1; render(); } };
+    $('remove').onclick = () => { pos = -1; history = []; render(); };
+    $('copy').onclick = () => copy(content(), $('copyHint'), 'Copy');
     $('share').onclick = async () => {
-      // once they've generated a message, share that (it already contains the link)
-      const message = $('msgbox').hidden ? null : $('msgtext').value.trim();
       if (navigator.share) {
         try {
-          await navigator.share(message ? {title: 'Academic Tēach', text: message} : {title: 'Academic Tēach', text, url: link});
+          await navigator.share(pos < 0 ? {title: 'Academic Tēach', text, url: link} : {title: 'Academic Tēach', text: content()});
           return;
         } catch (e) { if (e.name === 'AbortError') return; }
       }
-      copy(message || link, $('copyHint'), 'Copy');
+      copy(content(), $('copyHint'), 'Copy');
     };
-    $('copy').onclick = () => copy(link, $('copyHint'), 'Copy');
-
-    // ✨ Generate text: fill the box with the next message, link included
-    const waMsg = () => { $('waMsg').href = 'https://wa.me/?text=' + encodeURIComponent($('msgtext').value.trim()); };
-    $('gen').onclick = () => {
-      $('msgtext').value = MESSAGES[msgIndex % MESSAGES.length].replace('{link}', link);
-      msgIndex += 1;
-      $('msgbox').hidden = false;
-      $('gen').textContent = '✨ Generate another';
-      waMsg();
-    };
-    $('msgtext').oninput = waMsg; // keep WhatsApp in step with their edits
-    $('copyMsg').onclick = () => copy($('msgtext').value.trim(), $('copyMsg'), 'Copy message');
+    render();
 
     form.style.display = 'none';
     $('done').classList.add('show');
