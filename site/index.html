@@ -7,8 +7,9 @@
 <meta name="description" content="Something wiser this way comes. Join the Academic Tēach waitlist and get the first look before anyone else, straight to your inbox.">
 <meta property="og:title" content="Academic Tēach · Early look">
 <meta property="og:description" content="Something wiser this way comes. Join the waitlist and get the first look before anyone else.">
-<meta property="og:image" content="https://academicteach-waitlist.onrender.com/logo.png">
-<meta property="og:url" content="https://academicteach-waitlist.onrender.com/">
+<meta property="og:image" content="https://join.academicteach.in/logo.png">
+<meta property="og:url" content="https://join.academicteach.in/">
+<link rel="canonical" href="https://join.academicteach.in/">
 <meta name="theme-color" content="#04060c">
 <link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -334,7 +335,8 @@
 
   // Show your spot, friends count and personal share link
   function showSpot(spot, {welcomeBack = false} = {}) {
-    const link = `${location.origin}${location.pathname}?ref=${spot.code}&src=ref`;
+    // share links always use the main address, whichever address this page was opened on
+    const link = `https://join.academicteach.in/?ref=${spot.code}&src=ref`;
     const text = 'I’m in line for Academic Tēach: build your own AI teacher. Join with my link:';
     $('num').textContent = '#' + Number(spot.position);
     $('back').hidden = !welcomeBack;
