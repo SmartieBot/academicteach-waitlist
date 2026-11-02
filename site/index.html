@@ -126,6 +126,19 @@
   .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
   .done { display: none; text-align: center; padding: 30px 22px; }
+  .checking { display: none; text-align: center; padding: 34px 22px; color: var(--text-dim); font-size: 15px; }
+  body.is-checking form { display: none; }
+  body.is-checking .checking { display: block; }
+  .checking i { display: inline-block; width: 16px; height: 16px; margin-right: 10px; vertical-align: -3px; border-radius: 50%;
+    border: 2px solid rgba(45, 255, 160, 0.25); border-top-color: var(--green); animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .find-toggle { display: block; margin: 14px auto 0; background: none; border: 0; box-shadow: none; width: auto; padding: 6px 8px;
+    font: 600 14px Inter, system-ui, sans-serif; color: var(--green); cursor: pointer; }
+  .find { display: none; margin-top: 10px; padding-top: 16px; border-top: 1px solid rgba(140, 196, 255, 0.15); }
+  .find.open { display: block; }
+  .find-row { display: flex; gap: 8px; }
+  .find-row input { flex: 1; min-width: 0; }
+  .find-row button { width: auto; margin: 0; padding: 0 18px; flex: none; }
   .done.show { display: block; animation: rise 0.5s ease-out; }
   .done .num { font-size: 54px; font-weight: 700; letter-spacing: -1.5px; color: var(--green); text-shadow: 0 0 30px rgba(45, 255, 160, 0.4); }
   .done p { margin: 8px 0 0; color: var(--text-dim); font-size: 15px; line-height: 1.5; }
@@ -201,6 +214,7 @@
     <li><span>3</span>Share your link. Every friend who joins moves you up.</li>
   </ol>
 
+  <div class="checking" id="checking" role="status"><i></i>Checking your spot…</div>
   <form id="form" novalidate>
     <p class="invited" id="invited" hidden>A friend invited you. Joining helps them move up too.</p>
     <label class="field" for="email">Your email</label>
@@ -225,6 +239,16 @@
 
     <button id="submit" type="submit">Join the waitlist</button>
     <p class="msg" id="msg" role="alert"></p>
+
+    <button type="button" class="find-toggle" id="findToggle" aria-expanded="false" aria-controls="find">Already joined? See my spot</button>
+    <div class="find" id="find">
+      <label class="field" for="findEmail">The email you joined with</label>
+      <div class="find-row">
+        <input id="findEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" maxlength="254">
+        <button type="button" id="findBtn">Show</button>
+      </div>
+      <p class="msg" id="findMsg" role="alert"></p>
+    </div>
   </form>
 
   <div class="done" id="done" role="status" aria-live="polite">
@@ -397,10 +421,37 @@
   }
 
   // Coming back on the same phone: show the live spot straight away
+  // A: hide the form while we look the spot up. B: forget a saved code whose sign-up no longer exists.
+  const forget = () => { try { localStorage.removeItem(STORE); } catch (e) { /* fine */ } };
   const saved = recall();
   if (saved) {
-    rpc('waitlist_spot', {p_code: saved}).then((spot) => { if (spot) showSpot(spot, {welcomeBack: true}); }).catch(() => {});
+    document.body.classList.add('is-checking');
+    rpc('waitlist_spot', {p_code: saved})
+      .then((spot) => { if (spot) showSpot(spot, {welcomeBack: true}); else forget(); })
+      .catch(() => {})
+      .finally(() => document.body.classList.remove('is-checking'));
   }
+
+  // C: "Already joined? See my spot" (email only, never creates a sign-up)
+  $('findToggle').onclick = () => {
+    const open = $('find').classList.toggle('open');
+    $('findToggle').setAttribute('aria-expanded', open);
+    if (open) $('findEmail').focus();
+  };
+  const find = async () => {
+    const email = $('findEmail').value.trim();
+    $('findMsg').textContent = '';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) { $('findMsg').textContent = ERRORS.invalid_email; return; }
+    $('findBtn').disabled = true;
+    try {
+      const spot = await rpc('waitlist_find', {p_email: email});
+      if (spot) { remember(spot.code); showSpot(spot, {welcomeBack: true}); }
+      else $('findMsg').textContent = 'We couldn’t find that email. Join with it above?';
+    } catch (err) { $('findMsg').textContent = err.message; }
+    finally { $('findBtn').disabled = false; }
+  };
+  $('findBtn').onclick = find;
+  $('findEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); find(); } });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
